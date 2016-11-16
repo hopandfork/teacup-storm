@@ -1,37 +1,30 @@
 '''
-This version simply starts and stops machines on AWS.
+This file is currently inteded to test aws and boto3 capabilities.
 '''
 import boto3
 import yaml
 
-
+''' Creates a session using user-provided custom credentials. '''
 def createSession():
-    #Read configuration
     stream = open("config.yaml")
     conf = yaml.load(stream)
-    ACCESS_KEY = conf["id"]
-    SECRET_KEY = conf["key"]
-    REGION = conf["region"]
     
     session = boto3.session.Session(
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=SECRET_KEY,
-        region_name=REGION
+        aws_access_key_id=conf["id"],
+        aws_secret_access_key=conf["key"],
+        region_name=conf["region"]
     )
     return session
 
-def main():
-    # Print list of s3 buckets.
-    '''s3 = boto3.resource(
-        's3',
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=SECRET_KEY,
-        region_name=REGION
-    )'''
-    session = createSession()
+''' Prints list of s3 buckets. '''
+def printS3Buckets(session):
     s3 = session.resource('s3')
     for bucket in s3.buckets.all():
         print(bucket.name)
 
+def main():
+    session = createSession()
+    printS3Buckets(session)
+    
 if __name__ == "__main__":
     main()
