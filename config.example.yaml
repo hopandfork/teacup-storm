@@ -1,0 +1,5 @@
+---
+region: "eu-central-1"
+id: "EXAMPLEKEYID"
+key: "mysecretkey"
+...
