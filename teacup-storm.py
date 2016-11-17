@@ -10,11 +10,12 @@ class Configuration:
     def __init__(self):
         stream = open("config.yaml")
         conf = yaml.load(stream)
+        stream.close()
         self.aws_access_key_id = conf["aws_access_key_id"]
         self.aws_secret_access_key = conf["aws_secret_access_key"]
         self.region_name = conf["region_name"]
         self.key_pair = conf["key_pair"]
-
+        
 ''' Creates a session using user-provided custom credentials. '''
 def createSession():
     global config
@@ -25,6 +26,12 @@ def createSession():
     )
     return session
 
+def loadKeyPair():
+    fp = open(config.key_pair)
+    material = fp.read()
+    fp.close()
+    return material
+
 ''' Prints list of s3 buckets. '''
 def printS3Buckets(session):
     s3 = session.resource('s3')
@@ -34,10 +41,16 @@ def printS3Buckets(session):
 ''' Starts a single ec2 instance. '''
 def startEc2Instance(session):
     ec2 = session.resource('ec2')
+    keyPair = loadKeyPair()
+    ec2.import_key_pair(
+        KeyName='ec2',
+        PublicKeyMaterial=keyPair
+    )
     ec2.create_instances(
         ImageId="ami-f3659d9c",
         MinCount=1,
         MaxCount=1,
+        KeyName='ec2',
         InstanceType="t2.micro"
     )
 
