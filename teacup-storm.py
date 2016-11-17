@@ -26,12 +26,6 @@ def createSession():
     )
     return session
 
-def loadKeyPair():
-    fp = open(config.key_pair)
-    material = fp.read()
-    fp.close()
-    return material
-
 ''' Prints list of s3 buckets. '''
 def printS3Buckets(session):
     s3 = session.resource('s3')
@@ -39,26 +33,63 @@ def printS3Buckets(session):
         print(bucket.name)
 
 ''' Starts a single ec2 instance. '''
-def startEc2Instance(session):
+def startEc2Instance(session, userdata = ""):
     ec2 = session.resource('ec2')
-    keyPair = loadKeyPair()
-    ec2.import_key_pair(
-        KeyName='ec2',
-        PublicKeyMaterial=keyPair
-    )
-    ec2.create_instances(
+    response = ec2.create_instances(
         ImageId="ami-f3659d9c",
         MinCount=1,
         MaxCount=1,
-        KeyName='ec2',
-        InstanceType="t2.micro"
+        KeyName=config.key_pair,
+        InstanceType="t2.micro",
+        UserData=userdata,
+        SecurityGroupIds=[
+            "sg-de1a46b6",
+            "sg-fa4ca692"
+        ]
     )
+    for instance in response:
+        print("Status of instance with id " + instance.instance_id + " is " 
+            + instance.state["Name"])
 
-''' Stops a single ec2 instance. '''
-def terminateEc2Instance(session):
+''' Prints instances state change. '''
+def printStateChange(response):
+    for instance in response:
+        iId = instance["InstanceId"]
+        curr = instance["CurrentState"]["Name"]
+        prev = instance["PreviousState"]["Name"]
+        print("Instance with id " + iId + " changed from " + prev + " to " 
+            + curr)
+
+''' Returns running instances ids. '''
+def getInstancesByStateName(session, stateName):
+    idList = []
     ec2 = session.resource('ec2')
-    ec2.instances.stop()
-    ec2.instances.terminate()  
+    instances = ec2.instances.filter(
+        Filters=[
+            {
+                'Name': 'instance-state-name',
+                'Values': [
+                    stateName
+                ]
+            }
+        ]
+    )
+    for instance in instances:
+        idList.append(instance.instance_id)
+
+    return idList
+
+''' Terminates all ec2 instances. '''
+def terminateAllEc2Instances(session):
+    ec2 = session.resource('ec2')
+    
+    running = getInstancesByStateName(session, 'running')
+    stopResponse = ec2.instances.filter(InstanceIds=running).stop()
+    printStateChange(stopResponse[0]["StoppingInstances"])
+    
+    stopped = getInstancesByStateName(session, 'stopped')
+    terminateResponse = ec2.instances.filter(InstanceIds=stopped).terminate()  
+    printStateChange(terminateResponse[0]["TerminatingInstances"])
 
 def main():
     global config
@@ -69,8 +100,8 @@ def main():
             print("Starting ec2 instance...")
             startEc2Instance(session)
         elif sys.argv[1] == "stop":
-            print("Stopping ec2 instance...")
-            terminateEc2Instance(session)
+            print("Stopping ec2 instances...")
+            terminateAllEc2Instances(session)
         else:
             print("Usage: teacup-storm.py <start|stop>")
     else:

@@ -2,5 +2,5 @@
 region_name: "eu-central-1"
 aws_access_key_id: "EXAMPLEKEYID"
 aws_secret_access_key: "exAmplE-Secr3t-K3y"
-key_pair: "~/.ssh/ec2.pub"
+key_pair: "key_name"
 ...
