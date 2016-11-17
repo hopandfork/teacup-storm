@@ -3,15 +3,25 @@ import boto3
 import sys
 import yaml
 
+''' Global configuration object. '''
+global config
+
+class Configuration:
+    def __init__(self):
+        stream = open("config.yaml")
+        conf = yaml.load(stream)
+        self.aws_access_key_id = conf["aws_access_key_id"]
+        self.aws_secret_access_key = conf["aws_secret_access_key"]
+        self.region_name = conf["region_name"]
+        self.key_pair = conf["key_pair"]
+
 ''' Creates a session using user-provided custom credentials. '''
 def createSession():
-    stream = open("config.yaml")
-    conf = yaml.load(stream)
-    
+    global config
     session = boto3.session.Session(
-        aws_access_key_id = conf["id"],
-        aws_secret_access_key = conf["key"],
-        region_name = conf["region"]
+        aws_access_key_id = config.aws_access_key_id,
+        aws_secret_access_key = config.aws_secret_access_key,
+        region_name = config.region_name
     )
     return session
 
@@ -38,6 +48,8 @@ def terminateEc2Instance(session):
     ec2.instances.terminate()  
 
 def main():
+    global config
+    config = Configuration()
     session = createSession()
     if len(sys.argv) > 1:
         if sys.argv[1] == "start":

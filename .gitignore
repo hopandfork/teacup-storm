@@ -90,3 +90,6 @@ ENV/
 
 # Private configuration
 config.yaml
+
+# Vim swap files
+*.swp
