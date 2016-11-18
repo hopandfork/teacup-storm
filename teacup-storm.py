@@ -83,22 +83,38 @@ def getInstancesByStateName(session, stateName):
 def terminateAllEc2Instances(session):
     ec2 = session.resource('ec2')
     
-    running = getInstancesByStateName(session, 'running')
-    stopResponse = ec2.instances.filter(InstanceIds=running).stop()
-    printStateChange(stopResponse[0]["StoppingInstances"])
-    
-    stopped = getInstancesByStateName(session, 'stopped')
-    terminateResponse = ec2.instances.filter(InstanceIds=stopped).terminate()  
-    printStateChange(terminateResponse[0]["TerminatingInstances"])
+    runningIds = getInstancesByStateName(session, 'running')
+    if (len(runningIds)):
+        running = ec2.instances.filter(InstanceIds=runningIds)
+        stopResponse = running.stop()
+        printStateChange(stopResponse[0]["StoppingInstances"])
+    else:
+        print("No running instance to stop.")
+
+    stoppedIds = getInstancesByStateName(session, 'stopped')
+    if (len(stoppedIds)):
+        stopped = ec2.instances.filter(InstanceIds=stoppedIds)
+        terminateResponse = stopped.terminate()  
+        printStateChange(terminateResponse[0]["TerminatingInstances"])
+    else:
+        print("No stopped instances to terminate.")
+
+''' Gets default user data to run on startup. '''
+def getUserdata():
+    stream = open("testdata.sh")
+    userdata = stream.read()
+    stream.close()
+    return userdata
 
 def main():
     global config
     config = Configuration()
     session = createSession()
+    userdata = getUserdata()
     if len(sys.argv) > 1:
         if sys.argv[1] == "start":
             print("Starting ec2 instance...")
-            startEc2Instance(session)
+            startEc2Instance(session, userdata)
         elif sys.argv[1] == "stop":
             print("Stopping ec2 instances...")
             terminateAllEc2Instances(session)
