@@ -8,8 +8,14 @@ global config
 
 class Configuration:
     def __init__(self):
-        stream = open("config.yaml")
-        conf = yaml.load(stream)
+        try:
+            stream = open("config.yaml")
+        except IOError:
+            print("Failed to open configuration file")
+        try:
+            conf = yaml.load(stream)
+        except yaml.YAMLError:
+            print("Error in configuration file")
         stream.close()
         self.aws_access_key_id = conf["aws_access_key_id"]
         self.aws_secret_access_key = conf["aws_secret_access_key"]
