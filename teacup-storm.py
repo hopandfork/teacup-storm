@@ -107,7 +107,7 @@ def terminateAllEc2Instances(session):
 
 ''' Gets default user data to run on startup. '''
 def getUserdata():
-    stream = open("testdata.sh")
+    stream = open("./scripts/zookeeper.sh")
     userdata = stream.read()
     stream.close()
     return userdata
