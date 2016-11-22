@@ -8,19 +8,44 @@ global config
 
 class Configuration:
     def __init__(self):
+        conf = self.parseConfigurationFile('config.yaml')
+
+        self.getRequiredParameter(conf, 'aws_access_key_id')
+        self.getRequiredParameter(conf, 'aws_secret_access_key')
+        self.getRequiredParameter(conf, 'region_name')
+        self.getRequiredParameter(conf, 'key_pair')
+        self.getParameter(conf, 'zk_instances', 1)
+        
+    def parseConfigurationFile (self, config_file):
         try:
-            stream = open("config.yaml")
-        except IOError:
-            print("Failed to open configuration file")
-        try:
+            stream = open(config_file)
             conf = yaml.load(stream)
+            if conf == None:
+                raise yaml.YAMLError
+            stream.close()
+        except IOError:
+            print("Failed to open configuration file '{}'".format(config_file))
+            exit(1)
         except yaml.YAMLError:
-            print("Error in configuration file")
-        stream.close()
-        self.aws_access_key_id = conf["aws_access_key_id"]
-        self.aws_secret_access_key = conf["aws_secret_access_key"]
-        self.region_name = conf["region_name"]
-        self.key_pair = conf["key_pair"]
+            print("Error in configuration file '{}'".format(config_file))
+            stream.close()
+            exit(2)
+        else:
+            return conf
+
+    def getRequiredParameter(self, conf, key):
+        if key in conf:
+            setattr(self, key, conf[key])
+        else:
+            print("Missing required parameter '{}' in configuration."
+                    .format(key))
+
+    def getParameter(self, conf, key, defaultValue):
+        if key in conf:
+            setattr(self, key, conf[key])
+        else:
+            setattr(self, key, defaultValue)
+
         
 ''' Creates a session using user-provided custom credentials. '''
 def createSession():
