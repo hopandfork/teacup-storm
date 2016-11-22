@@ -1,9 +1,12 @@
 #!/bin/bash
-# Installs zookeeper on the machine.
+# Downloads and unpacks ZooKeeper on the machine.
 cd /opt/
 wget http://apache.org/dist/zookeeper/zookeeper-3.4.6/zookeeper-3.4.6.tar.gz
 tar -zxf zookeeper-3.4.6.tar.gz
 rm zookeeper-3.4.6.tar.gz
-# Configures Zookeeper.
+# Configures ZooKeeper.
+mkdir /var/zookeeper
 cd zookeeper-3.4.6
-cp ./conf/zoo_sample.cfg ./conf/zoo.cfg
+echo "tickTime=2000\ndataDir=/var/zookeeper\nclientPort=2181" > ./conf/zoo.cfg
+# Starts ZooKeeper.
+./bin/zkServer.sh start
