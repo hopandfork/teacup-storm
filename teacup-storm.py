@@ -64,7 +64,8 @@ def printS3Buckets(session):
         print(bucket.name)
 
 ''' Starts a single ec2 instance. '''
-def startEc2Instance(session, userdata = ""):
+def startEc2Instance(session, userdata = "", 
+    securitygroups = ["sg-de1a46b6", "sg-fa4ca692"]):
     ec2 = session.resource('ec2')
     response = ec2.create_instances(
         ImageId="ami-f3659d9c",
@@ -73,10 +74,7 @@ def startEc2Instance(session, userdata = ""):
         KeyName=config.key_pair,
         InstanceType="t2.micro",
         UserData=userdata,
-        SecurityGroupIds=[
-            "sg-de1a46b6",
-            "sg-fa4ca692"
-        ]
+        SecurityGroupIds=securitygroups
     )
     for instance in response:
         print("Status of instance with id " + instance.instance_id + " is " 
@@ -131,21 +129,28 @@ def terminateAllEc2Instances(session):
         print("No stopped instances to terminate.")
 
 ''' Gets default user data to run on startup. '''
-def getUserdata():
+def getZkUserdata():
     stream = open("./scripts/zookeeper.sh")
     userdata = stream.read()
     stream.close()
     return userdata
 
+def startZooKeeperInstance(session):
+    userdata = getZkUserdata()
+    secGroups =  ["sg-de1a46b6", "sg-fa4ca692", "sg-f87e2690"]
+    startEc2Instance(session, userdata, secGroups)
+
 def main():
     global config
     config = Configuration()
     session = createSession()
-    userdata = getUserdata()
     if len(sys.argv) > 1:
         if sys.argv[1] == "start":
             print("Starting ec2 instance...")
-            startEc2Instance(session, userdata)
+            startEc2Instance(session)
+        elif sys.argv[1] == "zoo":
+            print("Starting Zookeeper instance...")
+            startZooKeeperInstance(session)
         elif sys.argv[1] == "stop":
             print("Stopping ec2 instances...")
             terminateAllEc2Instances(session)
