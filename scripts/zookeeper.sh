@@ -31,6 +31,7 @@ echo "[program:zookeeper]" >> /etc/supervisord.conf
 echo "command=/opt/zookeeper-3.4.6/bin/zkServer.sh start-foreground" >> /etc/supervisord.conf
 echo "autorestart=true" >> /etc/supervisord.conf
 echo "stopsignal=KILL" >> /etc/supervisord.conf
-
 # Starts ZooKeeper in supervisor mode.
 /usr/local/bin/supervisord -c /etc/supervisord.conf
+# Adds daily cleanup job
+echo "/opt/zookeeper-3.4.6/bin/zkCleanup.sh /var/zookeeper -n 4" > /etc/cron.daily/zookeeper
