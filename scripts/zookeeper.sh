@@ -33,4 +33,4 @@ echo "autorestart=true" >> /etc/supervisord.conf
 echo "stopsignal=KILL" >> /etc/supervisord.conf
 
 # Starts ZooKeeper in supervisor mode.
-supervisord -c /etc/supervisord.conf
+/usr/local/bin/supervisord -c /etc/supervisord.conf
