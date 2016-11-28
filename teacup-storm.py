@@ -64,16 +64,18 @@ def printS3Buckets(session):
         print(bucket.name)
 
 ''' Starts a single ec2 instance. '''
-def startEc2Instance(session, userdata = "", 
-    securitygroups = ["sg-de1a46b6", "sg-fa4ca692"]):
+def startEc2Instance(session, userdata = "",
+    securitygroups = ["sg-de1a46b6", "sg-fa4ca692"], privateIp = ""):
+
     ec2 = session.resource('ec2')
-    response = ec2.create_instances(
+    response = ec2.Subnet("subnet-b81522d1").create_instances(
         ImageId="ami-f3659d9c",
         MinCount=1,
         MaxCount=1,
         KeyName=config.key_pair,
         InstanceType="t2.micro",
         UserData=userdata,
+        PrivateIpAddress=privateIp,
         SecurityGroupIds=securitygroups
     )
     for instance in response:
@@ -135,10 +137,57 @@ def getZkUserdata():
     stream.close()
     return userdata
 
-def startZooKeeperInstance(session):
+def getNimbusUserdata():
+    stream = open("./scripts/zookeeper.sh")
+    userdata = stream.read()
+    stream.close()
+    return userdata
+
+def getSupervisorUserdata():
+    stream = open("./scripts/zookeeper.sh")
+    userdata = stream.read()
+    stream.close()
+    return userdata
+
+def getUiUserdata():
+    stream = open("./scripts/zookeeper.sh")
+    userdata = stream.read()
+    stream.close()
+    return userdata
+
+def startZooKeeperInstance(session, secGroups = "", ip = ""):
     userdata = getZkUserdata()
-    secGroups =  ["sg-de1a46b6", "sg-fa4ca692", "sg-f87e2690"]
+    startEc2Instance(session, userdata, secGroups, ip)
+
+def startNimbusInstance(session, secGroups = "", ip = ""):
+    userdata = getNimbusUserdata()
+    startEc2Instance(session, userdata, secGroups, ip)
+
+def startSupervisorInstance(session, secGroups = ""):
+    userdata = getSupervisorUserdata()
     startEc2Instance(session, userdata, secGroups)
+
+def startUiInstance(session, secGroups = ""):
+    userdata = getUiUserdata()
+    startEc2Instance(session, userdata, secGroups)
+
+def startStormCluster(session):
+    zkIp = "172.31.0.6"
+    nimbusIp = "172.31.0.7"
+    sgSsh = "sg-de1a46b6"
+    sgDefault = "sg-f87e2690"
+    sgZk = "sg-fa4ca692"
+    sgNimbus = "sg-dee8cfb6"
+    sgSv = "sg-02e8cf6a"
+    sgUi = "sg-e9f7d081"
+    zkSecGroups =  [sgDefault, sgZk, sgSsh]
+    nimbusSecGroups =  [sgDefault, sgNimbus, sgSsh]
+    svSecGroups =  [sgDefault, sgSv, sgSsh]
+    uiSecGroups =  [sgDefault, sgUi, sgSsh]
+    startZooKeeperInstance(session, zkSecGroups, zkIp)
+    startNimbusInstance(session, nimbusSecGroups, nimbusIp)
+    startSupervisorInstance(session, svSecGroups)
+    startUiInstance(session, uiSecGroups)
 
 def main():
     global config
@@ -146,8 +195,8 @@ def main():
     session = createSession()
     if len(sys.argv) > 1:
         if sys.argv[1] == "start":
-            print("Starting ec2 instance...")
-            startEc2Instance(session)
+            print("Starting storm cluster...")
+            startStormCluster(session)
         elif sys.argv[1] == "zoo":
             print("Starting Zookeeper instance...")
             startZooKeeperInstance(session)
