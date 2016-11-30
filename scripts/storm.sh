@@ -8,14 +8,16 @@ rm storm-0.10.2.tar.gz
 mkdir /mnt/storm
 cd storm-0.10.2/conf
 echo "storm.zookeeper.servers:" > ./storm.yaml
-echo '  - "111.222.333.444"' >> ./storm.yaml
+_ZOOKEEPER_SERVERS_
+#echo '  - "111.222.333.444"' >> ./storm.yaml
 echo 'storm.local.dir: "/mnt/storm"' >> ./storm.yaml
-echo 'nimbus.seeds: ["111.222.333.44"]' >> ./storm.yaml
+echo 'nimbus.seeds: [_NIMBUS_SEEDS_]' >> ./storm.yaml
 echo "supervisor.slots.ports:" >> ./storm.yaml
-echo "- 6700" >> ./storm.yaml
-echo "- 6701" >> ./storm.yaml
-echo "- 6702" >> ./storm.yaml
-echo "- 6703" >> ./storm.yaml
+_SUPERVISOR_SLOT_PORTS_
+#echo "- 6700" >> ./storm.yaml
+#echo "- 6701" >> ./storm.yaml
+#echo "- 6702" >> ./storm.yaml
+#echo "- 6703" >> ./storm.yaml
 
 # This script installs the supervisor supervisord, found at www.supervisord.org
 easy_install supervisor
