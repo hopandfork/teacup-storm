@@ -137,20 +137,8 @@ def getZkUserdata():
     stream.close()
     return userdata
 
-def getNimbusUserdata():
+def getStormUserdata():
     stream = open("./scripts/storm.sh")
-    userdata = stream.read()
-    stream.close()
-    return userdata
-
-def getSupervisorUserdata():
-    stream = open("./scripts/zookeeper.sh")
-    userdata = stream.read()
-    stream.close()
-    return userdata
-
-def getUiUserdata():
-    stream = open("./scripts/zookeeper.sh")
     userdata = stream.read()
     stream.close()
     return userdata
@@ -161,24 +149,49 @@ def startZooKeeperInstance(session, secGroups=None):
         startEc2Instance(session, userdata)
     return startEc2Instance(session, userdata, secGroups)
 
-def startNimbusInstance(session, zkInstances, secGroups = ""):
-    userdata = getNimbusUserdata()
+def startNimbusInstance(session, zkInstances, secGroups):
+    userdata = getStormUserdata()
     zkIps = ""
     for instance in zkInstances:
         zkIps += echoCmd("\'- \"" + instance.private_ip_address + '"\'',
             "./storm.yaml")
-    userdata = userdata.replace("_ZOOKEEPER_SERVERS_", zkIps)
-    print(userdata)
-    return
-    startEc2Instance(session, userdata, secGroups)
+    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zkIps)
+    userdata = userdata.replace("_NIMBUS_SEEDS_", '"127.0.0.1"')
+    return startEc2Instance(session, userdata, secGroups)
 
-def startSupervisorInstance(session, secGroups = ""):
-    userdata = getSupervisorUserdata()
-    startEc2Instance(session, userdata, secGroups)
+def startSupervisorInstance(session, zkInstances, nimbusInstances, secGroups):
+    userdata = getStormUserdata()
+    zkIps = ""
+    for instance in zkInstances:
+        zkIps += echoCmd("\'- \"" + instance.private_ip_address + '"\'',
+            "./storm.yaml")
+    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zkIps)
 
-def startUiInstance(session, secGroups = ""):
-    userdata = getUiUserdata()
-    startEc2Instance(session, userdata, secGroups)
+    nimbusIps = ""
+    for index, instance in enumerate(nimbusInstances):
+        if (index > 0):
+            nimbusIps += ", "
+        nimbusIps += '"' + instance.private_ip_address + '"'
+
+    userdata = userdata.replace("_NIMBUS_SEEDS_", nimbusIps)
+    return startEc2Instance(session, userdata, secGroups)
+
+def startUiInstance(session, zkInstances, nimbusInstances, secGroups = ""):
+    userdata = getStormUserdata()
+    zkIps = ""
+    for instance in zkInstances:
+        zkIps += echoCmd("\'- \"" + instance.private_ip_address + '"\'',
+            "./storm.yaml")
+    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zkIps)
+
+    nimbusIps = ""
+    for index, instance in enumerate(nimbusInstances):
+        if (index > 0):
+            nimbusIps += ", "
+        nimbusIps += '"' + instance.private_ip_address + '"'
+
+    userdata = userdata.replace("_NIMBUS_SEEDS_", nimbusIps)
+    return startEc2Instance(session, userdata, secGroups)    
 
 def startStormCluster(session):
     sgSsh = "sg-de1a46b6"
@@ -193,8 +206,8 @@ def startStormCluster(session):
     uiSecGroups =  [sgDefault, sgUi, sgSsh]
     zkInstances = startZooKeeperInstance(session, zkSecGroups)
     nimbusInstances = startNimbusInstance(session, zkInstances, nimbusSecGroups)
-    #startSupervisorInstance(session, svSecGroups)
-    #startUiInstance(session, uiSecGroups)
+    startSupervisorInstance(session, zkInstances, nimbusInstances, svSecGroups)
+    startUiInstance(session, zkInstances, nimbusInstances, uiSecGroups)
 
 def echoCmd(command, filename):
     return "echo " + command + " >> " + filename + "\n"
