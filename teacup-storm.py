@@ -57,12 +57,6 @@ def createSession():
     )
     return session
 
-''' Prints list of s3 buckets. '''
-def printS3Buckets(session):
-    s3 = session.resource('s3')
-    for bucket in s3.buckets.all():
-        print(bucket.name)
-
 ''' Starts a single ec2 instance. '''
 def startEc2Instance(session, userdata = "", 
 securitygroups = ["sg-de1a46b6", "sg-fa4ca692"]):
@@ -157,6 +151,7 @@ def startNimbusInstance(session, zkInstances, secGroups):
             "./storm.yaml")
     userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zkIps)
     userdata = userdata.replace("_NIMBUS_SEEDS_", '"127.0.0.1"')
+    userdata = userdata.replace("_STORM_SERVICE_", "nimbus");
     return startEc2Instance(session, userdata, secGroups)
 
 def startSupervisorInstance(session, zkInstances, nimbusInstances, secGroups):
@@ -174,6 +169,7 @@ def startSupervisorInstance(session, zkInstances, nimbusInstances, secGroups):
         nimbusIps += '"' + instance.private_ip_address + '"'
 
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbusIps)
+    userdata = userdata.replace("_STORM_SERVICE_", "supervisor")
     return startEc2Instance(session, userdata, secGroups)
 
 def startUiInstance(session, zkInstances, nimbusInstances, secGroups = ""):
@@ -191,6 +187,7 @@ def startUiInstance(session, zkInstances, nimbusInstances, secGroups = ""):
         nimbusIps += '"' + instance.private_ip_address + '"'
 
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbusIps)
+    userdata = userdata.replace("_STORM_SERVICE_", "ui")
     return startEc2Instance(session, userdata, secGroups)    
 
 def startStormCluster(session):
@@ -216,20 +213,15 @@ def main():
     global config
     config = Configuration()
     session = createSession()
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 1 and (sys.argv[1] == "start" or sys.argv[1] == "stop"):
         if sys.argv[1] == "start":
             print("Starting storm cluster...")
             startStormCluster(session)
-        elif sys.argv[1] == "zoo":
-            print("Starting Zookeeper instance...")
-            startZooKeeperInstance(session)
         elif sys.argv[1] == "stop":
             print("Stopping ec2 instances...")
             terminateAllEc2Instances(session)
-        else:
-            print("Usage: teacup-storm.py <start|stop>")
     else:
-        printS3Buckets(session)
+        print("Usage: teacup-storm.py <start|stop>")
     
 if __name__ == "__main__":
     main()
