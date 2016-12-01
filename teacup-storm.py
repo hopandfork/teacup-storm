@@ -14,6 +14,10 @@ class Configuration:
         self.getRequiredParameter(conf, 'aws_secret_access_key')
         self.getRequiredParameter(conf, 'region_name')
         self.getRequiredParameter(conf, 'key_pair')
+        self.getRequiredParameter(conf, 'security_groups_zk')
+        self.getRequiredParameter(conf, 'security_groups_ui')
+        self.getRequiredParameter(conf, 'security_groups_ni')
+        self.getRequiredParameter(conf, 'security_groups_sv')
         self.getParameter(conf, 'zk_instances', 1)
         
     def parseConfigurationFile (self, config_file):
@@ -58,13 +62,12 @@ def createSession():
     return session
 
 ''' Starts a single ec2 instance. '''
-def startEc2Instance(session, userdata = "", 
-securitygroups = ["sg-de1a46b6", "sg-fa4ca692"]):
+def startEc2Instance(session, userdata, securitygroups, count=1):
     ec2 = session.resource('ec2')
     instances = ec2.Subnet("subnet-b81522d1").create_instances(
         ImageId="ami-f3659d9c",
-        MinCount=1,
-        MaxCount=1,
+        MinCount=count,
+        MaxCount=count,
         KeyName=config.key_pair,
         InstanceType="t2.micro",
         UserData=userdata,
@@ -137,13 +140,13 @@ def getStormUserdata():
     stream.close()
     return userdata
 
-def startZooKeeperInstance(session, secGroups=None):
+def startZooKeeperInstance(session):
+    global config
     userdata = getZkUserdata()
-    if secGroups == None:
-        startEc2Instance(session, userdata)
-    return startEc2Instance(session, userdata, secGroups)
+    return startEc2Instance(session, userdata, config.security_groups_zk)
 
-def startNimbusInstance(session, zkInstances, secGroups):
+def startNimbusInstance(session, zkInstances):
+    global config
     userdata = getStormUserdata()
     zkIps = ""
     for instance in zkInstances:
@@ -152,9 +155,10 @@ def startNimbusInstance(session, zkInstances, secGroups):
     userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zkIps)
     userdata = userdata.replace("_NIMBUS_SEEDS_", '"127.0.0.1"')
     userdata = userdata.replace("_STORM_SERVICE_", "nimbus");
-    return startEc2Instance(session, userdata, secGroups)
+    return startEc2Instance(session, userdata, config.security_groups_ni)
 
-def startSupervisorInstance(session, zkInstances, nimbusInstances, secGroups):
+def startSupervisorInstance(session, zkInstances, nimbusInstances):
+    global config
     userdata = getStormUserdata()
     zkIps = ""
     for instance in zkInstances:
@@ -170,9 +174,10 @@ def startSupervisorInstance(session, zkInstances, nimbusInstances, secGroups):
 
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbusIps)
     userdata = userdata.replace("_STORM_SERVICE_", "supervisor")
-    return startEc2Instance(session, userdata, secGroups)
+    return startEc2Instance(session, userdata, config.security_groups_sv)
 
-def startUiInstance(session, zkInstances, nimbusInstances, secGroups = ""):
+def startUiInstance(session, zkInstances, nimbusInstances):
+    global config
     userdata = getStormUserdata()
     zkIps = ""
     for instance in zkInstances:
@@ -188,23 +193,13 @@ def startUiInstance(session, zkInstances, nimbusInstances, secGroups = ""):
 
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbusIps)
     userdata = userdata.replace("_STORM_SERVICE_", "ui")
-    return startEc2Instance(session, userdata, secGroups)    
+    return startEc2Instance(session, userdata, config.security_groups_ui)    
 
 def startStormCluster(session):
-    sgSsh = "sg-de1a46b6"
-    sgDefault = "sg-f87e2690"
-    sgZk = "sg-fa4ca692"
-    sgNimbus = "sg-dee8cfb6"
-    sgSv = "sg-02e8cf6a"
-    sgUi = "sg-e9f7d081"
-    zkSecGroups =  [sgDefault, sgZk, sgSsh]
-    nimbusSecGroups =  [sgDefault, sgNimbus, sgSsh]
-    svSecGroups =  [sgDefault, sgSv, sgSsh]
-    uiSecGroups =  [sgDefault, sgUi, sgSsh]
-    zkInstances = startZooKeeperInstance(session, zkSecGroups)
-    nimbusInstances = startNimbusInstance(session, zkInstances, nimbusSecGroups)
-    startSupervisorInstance(session, zkInstances, nimbusInstances, svSecGroups)
-    startUiInstance(session, zkInstances, nimbusInstances, uiSecGroups)
+    zkInstances = startZooKeeperInstance(session)
+    nimbusInstances = startNimbusInstance(session, zkInstances)
+    startSupervisorInstance(session, zkInstances, nimbusInstances)
+    startUiInstance(session, zkInstances, nimbusInstances)
 
 def echoCmd(command, filename):
     return "echo " + command + " >> " + filename + "\n"
