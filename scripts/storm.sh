@@ -35,10 +35,8 @@ echo "supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcint
 echo "[supervisorctl]" >> /etc/supervisord.conf
 echo "serverurl=unix:///tmp/supervisor.sock" >> /etc/supervisord.conf
 echo "[program:storm]" >> /etc/supervisord.conf
-#echo "command=/opt/zookeeper-3.4.6/bin/zkServer.sh start-foreground" >> /etc/supervisord.conf
+echo "command=/opt/storm-0.10.2/bin/storm _STORM_SERVICE_" >> /etc/supervisord.conf
 echo "autorestart=true" >> /etc/supervisord.conf
 echo "stopsignal=KILL" >> /etc/supervisord.conf
 # Starts Storm in supervisor mode.
 /usr/local/bin/supervisord -c /etc/supervisord.conf
-# Adds daily cleanup job
-# echo "/opt/zookeeper-3.4.6/bin/zkCleanup.sh /var/zookeeper -n 4" > /etc/cron.daily/zookeeper
