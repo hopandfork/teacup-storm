@@ -1,12 +1,12 @@
 #!/bin/bash
 # Downloads and unpacks Apache Storm on the machine.
 cd /opt/
-wget https://github.com/apache/storm/archive/v0.10.2.tar.gz
-tar -zxf storm-0.10.2.tar.gz
-rm storm-0.10.2.tar.gz
+wget http://www-eu.apache.org/dist/storm/apache-storm-1.0.2/apache-storm-1.0.2.tar.gz
+tar -zxf apache-storm-1.0.2.tar.gz
+rm apache-storm-1.0.2.tar.gz
 # Configures Storm.
 mkdir /mnt/storm
-cd storm-0.10.2/conf
+cd ./apache-storm-1.0.2/conf
 echo "storm.zookeeper.servers:" > ./storm.yaml
 _ZOOKEEPER_SERVERS_
 echo 'storm.local.dir: "/mnt/storm"' >> ./storm.yaml
@@ -35,7 +35,7 @@ echo "supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcint
 echo "[supervisorctl]" >> /etc/supervisord.conf
 echo "serverurl=unix:///tmp/supervisor.sock" >> /etc/supervisord.conf
 echo "[program:storm]" >> /etc/supervisord.conf
-echo "command=/opt/storm-0.10.2/bin/storm _STORM_SERVICE_" >> /etc/supervisord.conf
+echo "command=/opt/apache-storm-1.0.2/bin/storm _STORM_SERVICE_" >> /etc/supervisord.conf
 echo "autorestart=true" >> /etc/supervisord.conf
 echo "stopsignal=KILL" >> /etc/supervisord.conf
 # Starts Storm in supervisor mode.
