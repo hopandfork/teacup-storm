@@ -1,16 +1,15 @@
 ''' This file is currently inteded to test aws and boto3 capabilities. '''
-import boto3
 import sys
+import boto3
 import yaml
 from configuration import Configuration
 
-''' Global configuration object. '''
-global config
-
+# Global configuration object
+config=None
 
         
 ''' Creates a session using user-provided custom credentials. '''
-def createSession():
+def create_session():
     global config
     session = boto3.session.Session(
         aws_access_key_id = config.aws_access_key_id,
@@ -20,7 +19,7 @@ def createSession():
     return session
 
 ''' Starts a single ec2 instance. '''
-def startEc2Instance(session, userdata, securitygroups, count=1):
+def start_ec2_instance(session, userdata, securitygroups, count=1):
     ec2 = session.resource('ec2')
     instances = ec2.Subnet("subnet-b81522d1").create_instances(
         ImageId="ami-f3659d9c",
@@ -33,21 +32,21 @@ def startEc2Instance(session, userdata, securitygroups, count=1):
     )
     for instance in instances:
         print("Status of instance with id " + instance.instance_id + " and " 
-        + "private ip " + instance.private_ip_address + " is " 
-        + instance.state["Name"])
+              + "private ip " + instance.private_ip_address + " is " 
+              + instance.state["Name"])
     return instances
 
 ''' Prints instances state change. '''
-def printStateChange(response):
+def print_state_change(response):
     for instance in response:
         iId = instance["InstanceId"]
         curr = instance["CurrentState"]["Name"]
         prev = instance["PreviousState"]["Name"]
         print("Instance with id " + iId + " changed from " + prev + " to " 
-            + curr)
+              + curr)
 
 ''' Returns running instances ids. '''
-def getInstancesByStateName(session, stateName):
+def get_instances_by_state_name(session, state_name):
     idList = []
     ec2 = session.resource('ec2')
     instances = ec2.instances.filter(
@@ -55,7 +54,7 @@ def getInstancesByStateName(session, stateName):
             {
                 'Name': 'instance-state-name',
                 'Values': [
-                    stateName
+                    state_name
                 ]
             }
         ]
@@ -66,113 +65,113 @@ def getInstancesByStateName(session, stateName):
     return idList
 
 ''' Terminates all ec2 instances. '''
-def terminateAllEc2Instances(session):
+def terminate_all_ec2_instances(session):
     ec2 = session.resource('ec2')
     
-    runningIds = getInstancesByStateName(session, 'running')
-    if (len(runningIds)):
-        running = ec2.instances.filter(InstanceIds=runningIds)
-        stopResponse = running.stop()
-        printStateChange(stopResponse[0]["StoppingInstances"])
+    running_ids = get_instances_by_state_name(session, 'running')
+    if len(running_ids):
+        running = ec2.instances.filter(InstanceIds=running_ids)
+        stop_response = running.stop()
+        print_state_change(stopResponse[0]["StoppingInstances"])
     else:
         print("No running instance to stop.")
 
-    stoppedIds = getInstancesByStateName(session, 'stopped')
-    if (len(stoppedIds)):
-        stopped = ec2.instances.filter(InstanceIds=stoppedIds)
-        terminateResponse = stopped.terminate()  
-        printStateChange(terminateResponse[0]["TerminatingInstances"])
+    stopped_ids = get_instances_by_state_name(session, 'stopped')
+    if len(stopped_ids):
+        stopped = ec2.instances.filter(InstanceIds=stopped_ids)
+        terminate_response = stopped.terminate()  
+        print_state_change(terminateResponse[0]["TerminatingInstances"])
     else:
         print("No stopped instances to terminate.")
 
 ''' Gets default user data to run on startup. '''
-def getZkUserdata():
+def get_zk_userdata():
     stream = open("./scripts/zookeeper.sh")
     userdata = stream.read()
     stream.close()
     return userdata
 
-def getStormUserdata():
+def get_storm_userdata():
     stream = open("./scripts/storm.sh")
     userdata = stream.read()
     stream.close()
     return userdata
 
-def startZooKeeperInstance(session):
+def start_zk_instance(session):
     global config
-    userdata = getZkUserdata()
-    return startEc2Instance(session, userdata, config.security_groups_zk)
+    userdata = get_zk_userdata()
+    return start_ec2_instance(session, userdata, config.security_groups_zk)
 
-def startNimbusInstance(session, zkInstances):
+def start_nimbus_instance(session, zk_instances):
     global config
-    userdata = getStormUserdata()
-    zkIps = ""
-    for instance in zkInstances:
-        zkIps += echoCmd("\'- \"" + instance.private_ip_address + '"\'',
-            "./storm.yaml")
-    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zkIps)
+    userdata = get_storm_userdata()
+    zk_ips = ""
+    for instance in zk_instances:
+        zk_ips += echo_cmd("\'- \"" + instance.private_ip_address + '"\'',
+                           "./storm.yaml")
+    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zk_ips)
     userdata = userdata.replace("_NIMBUS_SEEDS_", '"127.0.0.1"')
-    userdata = userdata.replace("_STORM_SERVICE_", "nimbus");
-    return startEc2Instance(session, userdata, config.security_groups_ni)
+    userdata = userdata.replace("_STORM_SERVICE_", "nimbus")
+    return start_ec2_instance(session, userdata, config.security_groups_ni)
 
-def startSupervisorInstance(session, zkInstances, nimbusInstances):
+def start_supervisor_instance(session, zk_instances, nimbus_instances):
     global config
-    userdata = getStormUserdata()
-    zkIps = ""
-    for instance in zkInstances:
-        zkIps += echoCmd("\'- \"" + instance.private_ip_address + '"\'',
-            "./storm.yaml")
-    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zkIps)
+    userdata = get_storm_userdata()
+    zk_ips = ""
+    for instance in zk_instances:
+        zk_ips += echo_cmd("\'- \"" + instance.private_ip_address + '"\'',
+                           "./storm.yaml")
+    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zk_ips)
 
-    nimbusIps = ""
-    for index, instance in enumerate(nimbusInstances):
-        if (index > 0):
-            nimbusIps += ", "
-        nimbusIps += '"' + instance.private_ip_address + '"'
+    nimbus_ips = ""
+    for index, instance in enumerate(nimbus_instances):
+        if index > 0:
+            nimbus_ips += ", "
+        nimbus_ips += '"' + instance.private_ip_address + '"'
 
-    userdata = userdata.replace("_NIMBUS_SEEDS_", nimbusIps)
+    userdata = userdata.replace("_NIMBUS_SEEDS_", nimbus_ips)
     userdata = userdata.replace("_STORM_SERVICE_", "supervisor")
-    return startEc2Instance(session, userdata, config.security_groups_sv)
+    return start_ec2_instance(session, userdata, config.security_groups_sv)
 
-def startUiInstance(session, zkInstances, nimbusInstances):
+def start_ui_instance(session, zk_instances, nimbus_instances):
     global config
-    userdata = getStormUserdata()
-    zkIps = ""
-    for instance in zkInstances:
-        zkIps += echoCmd("\'- \"" + instance.private_ip_address + '"\'',
-            "./storm.yaml")
-    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zkIps)
+    userdata = get_storm_userdata()
+    zk_ips = ""
+    for instance in zk_instances:
+        zk_ips += echo_cmd("\'- \"" + instance.private_ip_address + '"\'',
+                           "./storm.yaml")
+    userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zk_ips)
 
-    nimbusIps = ""
-    for index, instance in enumerate(nimbusInstances):
-        if (index > 0):
-            nimbusIps += ", "
-        nimbusIps += '"' + instance.private_ip_address + '"'
+    nimbus_ips = ""
+    for index, instance in enumerate(nimbus_instances):
+        if index > 0:
+            nimbus_ips += ", "
+        nimbus_ips += '"' + instance.private_ip_address + '"'
 
-    userdata = userdata.replace("_NIMBUS_SEEDS_", nimbusIps)
+    userdata = userdata.replace("_NIMBUS_SEEDS_", nimbus_ips)
     userdata = userdata.replace("_STORM_SERVICE_", "ui")
-    return startEc2Instance(session, userdata, config.security_groups_ui)    
+    return start_ec2_instance(session, userdata, config.security_groups_ui)    
 
-def startStormCluster(session):
-    zkInstances = startZooKeeperInstance(session)
-    nimbusInstances = startNimbusInstance(session, zkInstances)
-    startSupervisorInstance(session, zkInstances, nimbusInstances)
-    startUiInstance(session, zkInstances, nimbusInstances)
+def start_storm_cluster(session):
+    zk_instances = start_zk_instance(session)
+    nimbus_instances = start_nimbus_instance(session, zk_instances)
+    start_supervisor_instance(session, zk_instances, nimbus_instances)
+    start_ui_instance(session, zk_instances, nimbus_instances)
 
-def echoCmd(command, filename):
+def echo_cmd(command, filename):
     return "echo " + command + " >> " + filename + "\n"
 
 def main():
     global config
     config = Configuration()
-    session = createSession()
+    session = create_session()
     if len(sys.argv) > 1 and (sys.argv[1] == "start" or sys.argv[1] == "stop"):
         if sys.argv[1] == "start":
             print("Starting storm cluster...")
-            startStormCluster(session)
+            start_storm_cluster(session)
         elif sys.argv[1] == "stop":
             print("Stopping ec2 instances...")
-            terminateAllEc2Instances(session)
+            terminate_all_ec2_instances(session)
     else:
         print("Usage: teacup-storm.py <start|stop>")
     
