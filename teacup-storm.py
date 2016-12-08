@@ -19,7 +19,7 @@ def create_session():
     return session
 
 ''' Starts a single ec2 instance. '''
-def start_ec2_instance(session, userdata, securitygroups, count=1):
+def start_ec2_instance(session, userdata, securitygroups, name, count=1):
     ec2 = session.resource('ec2')
     instances = ec2.Subnet("subnet-b81522d1").create_instances(
         ImageId="ami-f3659d9c",
@@ -32,6 +32,14 @@ def start_ec2_instance(session, userdata, securitygroups, count=1):
     )
     for instance in instances:
         instance.wait_until_running()
+        instance.create_tags(
+            Tags=[
+                {
+                    'Key': 'Name',
+                    'Value': name
+                }
+            ]
+        )
         instance.load()
         print("Status of instance with id " + instance.instance_id + ", " 
               + "private ip " + instance.private_ip_address + " and public ip "
@@ -102,7 +110,8 @@ def get_storm_userdata():
 def start_zk_instance(session):
     global config
     userdata = get_zk_userdata()
-    return start_ec2_instance(session, userdata, config.security_groups_zk)
+    return start_ec2_instance(session, userdata, config.security_groups_zk,
+        "zookeeper")
 
 def start_nimbus_instance(session, zk_instances):
     global config
@@ -114,7 +123,8 @@ def start_nimbus_instance(session, zk_instances):
     userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zk_ips)
     userdata = userdata.replace("_NIMBUS_SEEDS_", '"127.0.0.1"')
     userdata = userdata.replace("_STORM_SERVICE_", "nimbus")
-    return start_ec2_instance(session, userdata, config.security_groups_ni)
+    return start_ec2_instance(session, userdata, config.security_groups_ni,
+        "nimbus")
 
 def start_supervisor_instance(session, zk_instances, nimbus_instances):
     global config
@@ -133,7 +143,8 @@ def start_supervisor_instance(session, zk_instances, nimbus_instances):
 
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbus_ips)
     userdata = userdata.replace("_STORM_SERVICE_", "supervisor")
-    return start_ec2_instance(session, userdata, config.security_groups_sv)
+    return start_ec2_instance(session, userdata, config.security_groups_sv,
+        "supervisor")
 
 def start_ui_instance(session, zk_instances, nimbus_instances):
     global config
@@ -152,7 +163,8 @@ def start_ui_instance(session, zk_instances, nimbus_instances):
 
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbus_ips)
     userdata = userdata.replace("_STORM_SERVICE_", "ui")
-    return start_ec2_instance(session, userdata, config.security_groups_ui)    
+    return start_ec2_instance(session, userdata, config.security_groups_ui,
+        "ui")
 
 def start_storm_cluster(session):
     zk_instances = start_zk_instance(session)
