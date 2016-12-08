@@ -31,9 +31,11 @@ def start_ec2_instance(session, userdata, securitygroups, count=1):
         SecurityGroupIds=securitygroups
     )
     for instance in instances:
-        print("Status of instance with id " + instance.instance_id + " and " 
-              + "private ip " + instance.private_ip_address + " is " 
-              + instance.state["Name"])
+        instance.wait_until_running()
+        instance.load()
+        print("Status of instance with id " + instance.instance_id + ", " 
+              + "private ip " + instance.private_ip_address + " and public ip "
+              + instance.public_ip_address + " is " + instance.state["Name"])
     return instances
 
 ''' Prints instances state change. '''
