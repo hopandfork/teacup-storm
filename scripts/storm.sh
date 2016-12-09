@@ -11,12 +11,7 @@ echo "storm.zookeeper.servers:" > ./storm.yaml
 _ZOOKEEPER_SERVERS_
 echo 'storm.local.dir: "/mnt/storm"' >> ./storm.yaml
 echo 'nimbus.seeds: [_NIMBUS_SEEDS_]' >> ./storm.yaml
-echo "supervisor.slots.ports:" >> ./storm.yaml
-echo "- 6700" >> ./storm.yaml
-echo "- 6701" >> ./storm.yaml
-echo "- 6702" >> ./storm.yaml
-echo "- 6703" >> ./storm.yaml
-
+_SUPERVISOR_PORTS_
 # This script installs the supervisor supervisord, found at www.supervisord.org
 easy_install supervisor
 echo "[unix_http_server]" > /etc/supervisord.conf

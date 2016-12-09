@@ -118,11 +118,12 @@ def start_nimbus_instance(session, zk_instances):
     userdata = get_storm_userdata()
     zk_ips = ""
     for instance in zk_instances:
-        zk_ips += echo_cmd("\'- \"" + instance.private_ip_address + '"\'',
+        zk_ips += echo_cmd("\'- \"" + instance.private_dns_name + '"\'',
                            "./storm.yaml")
     userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zk_ips)
     userdata = userdata.replace("_NIMBUS_SEEDS_", '"127.0.0.1"')
     userdata = userdata.replace("_STORM_SERVICE_", "nimbus")
+    userdata = userdata.replace("_SUPERVISOR_PORTS_", "")
     return start_ec2_instance(session, userdata, config.security_groups_ni,
         "nimbus")
 
@@ -131,7 +132,7 @@ def start_supervisor_instance(session, zk_instances, nimbus_instances):
     userdata = get_storm_userdata()
     zk_ips = ""
     for instance in zk_instances:
-        zk_ips += echo_cmd("\'- \"" + instance.private_ip_address + '"\'',
+        zk_ips += echo_cmd("\'- \"" + instance.private_dns_name + '"\'',
                            "./storm.yaml")
     userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zk_ips)
 
@@ -139,9 +140,15 @@ def start_supervisor_instance(session, zk_instances, nimbus_instances):
     for index, instance in enumerate(nimbus_instances):
         if index > 0:
             nimbus_ips += ", "
-        nimbus_ips += '"' + instance.private_ip_address + '"'
-
+        nimbus_ips += '"' + instance.private_dns_name + '"'
+    ''' This should be user-configurable, at least in the number of workers to
+        be used '''
+    ports = [6700, 6701, 6702, 6703]
+    supervisor_ports = "echo 'supervisor.slots.ports:' >> ./storm.yaml\n"
+    for port in ports:
+        supervisor_ports += "echo '- " + str(port) + "' >> ./storm.yaml\n"
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbus_ips)
+    userdata = userdata.replace("_SUPERVISOR_PORTS_", supervisor_ports)
     userdata = userdata.replace("_STORM_SERVICE_", "supervisor")
     return start_ec2_instance(session, userdata, config.security_groups_sv,
         "supervisor")
@@ -151,7 +158,7 @@ def start_ui_instance(session, zk_instances, nimbus_instances):
     userdata = get_storm_userdata()
     zk_ips = ""
     for instance in zk_instances:
-        zk_ips += echo_cmd("\'- \"" + instance.private_ip_address + '"\'',
+        zk_ips += echo_cmd("\'- \"" + instance.public_ip_address + '"\'',
                            "./storm.yaml")
     userdata = userdata.replace("_ZOOKEEPER_SERVERS_\n", zk_ips)
 
@@ -159,10 +166,11 @@ def start_ui_instance(session, zk_instances, nimbus_instances):
     for index, instance in enumerate(nimbus_instances):
         if index > 0:
             nimbus_ips += ", "
-        nimbus_ips += '"' + instance.private_ip_address + '"'
+        nimbus_ips += '"' + instance.public_ip_address + '"'
 
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbus_ips)
     userdata = userdata.replace("_STORM_SERVICE_", "ui")
+    userdata = userdata.replace("_SUPERVISOR_PORTS_", "")
     return start_ec2_instance(session, userdata, config.security_groups_ui,
         "ui")
 
