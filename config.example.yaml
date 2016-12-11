@@ -3,6 +3,8 @@ region_name: "eu-central-1"
 aws_access_key_id: "EXAMPLEKEYID"
 aws_secret_access_key: "exAmplE-Secr3t-K3y"
 key_pair: "key_name"
+default_vpc: "vpc-cd421fa4"
+default_vpc_security_group: "sg-fa4ca692"
 security_groups_zk: ["sg-f87e2690", "sg-fa4ca692", "sg-de1a46b6"]
 security_groups_ni: ["sg-fa4ca692", "sg-dee8cfb6", "sg-de1a46b6"]
 security_groups_sv: ["sg-fa4ca692", "sg-02e8cf6a", "sg-de1a46b6"]
