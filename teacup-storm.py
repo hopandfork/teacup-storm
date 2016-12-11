@@ -41,7 +41,7 @@ def start_ec2_instance(session, userdata, securitygroups, name, count=1):
             ]
         )
         instance.load()
-        print("Status of instance with id " + instance.instance_id + ", " 
+        print(name + " instance with id " + instance.instance_id + ", " 
               + "private ip " + instance.private_ip_address + " and public ip "
               + instance.public_ip_address + " is " + instance.state["Name"])
     return instances
@@ -127,6 +127,14 @@ def start_nimbus_instance(session, zk_instances):
     return start_ec2_instance(session, userdata, config.security_groups_ni,
         "nimbus")
 
+def compute_supervisor_ports(slots=4):
+    supervisor_ports = "echo 'supervisor.slots.ports:' >> ./storm.yaml\n"
+    starting_port = 6700
+    for i in range(0, slots):
+        port = starting_port + i
+        supervisor_ports += "echo '- " + str(port) + "' >> ./storm.yaml\n"
+    return supervisor_ports
+
 def start_supervisor_instance(session, zk_instances, nimbus_instances):
     global config
     userdata = get_storm_userdata()
@@ -141,17 +149,15 @@ def start_supervisor_instance(session, zk_instances, nimbus_instances):
         if index > 0:
             nimbus_ips += ", "
         nimbus_ips += '"' + instance.private_dns_name + '"'
-    ''' This should be user-configurable, at least in the number of workers to
-        be used '''
-    ports = [6700, 6701, 6702, 6703]
-    supervisor_ports = "echo 'supervisor.slots.ports:' >> ./storm.yaml\n"
-    for port in ports:
-        supervisor_ports += "echo '- " + str(port) + "' >> ./storm.yaml\n"
+    
+    supervisor_ports = compute_supervisor_ports(config.slots)
+    
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbus_ips)
     userdata = userdata.replace("_SUPERVISOR_PORTS_", supervisor_ports)
     userdata = userdata.replace("_STORM_SERVICE_", "supervisor")
+    print(userdata)
     return start_ec2_instance(session, userdata, config.security_groups_sv,
-        "supervisor")
+        "supervisor", config.supervisors)
 
 def start_ui_instance(session, zk_instances, nimbus_instances):
     global config

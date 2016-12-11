@@ -16,6 +16,8 @@ class Configuration:
         self.get_required_parameter(conf, 'security_groups_ni')
         self.get_required_parameter(conf, 'security_groups_sv')
         self.get_parameter(conf, 'zk_instances', 1)
+        self.get_parameter(conf, 'supervisors', 1)
+        self.get_parameter(conf, 'slots', 4)
         
     def parse_configuration_file(self, config_file):
         try:
