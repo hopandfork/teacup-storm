@@ -11,4 +11,9 @@ security_groups_sv: ["sg-fa4ca692", "sg-02e8cf6a", "sg-de1a46b6"]
 security_groups_ui: ["sg-fa4ca692", "sg-e9f7d081", "sg-de1a46b6"]
 supervisors: 1
 slots: 8
+default_ami_id: "ami-0fb17060"
+nimbus_ami_id: "ami-abcd0123"
+supervisor_ami_id: "ami-bcde1234"
+ui_ami_id: "ami-abce2345"
+zookeeper_ami_id: "ami-edcb3456"
 ...

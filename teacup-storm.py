@@ -18,11 +18,33 @@ def create_session():
     )
     return session
 
+def is_default_ami():
+    global config
+    if config.nimbus_ami_id == "" or config.supervisor_ami_id == "" or config.ui_ami_id == "" or config.zookeeper_ami_id == "":
+        return True
+    return False
+
+def get_ami_id(name):
+    global config
+    ami_id = None
+    if is_default_ami():
+        ami_id = config.default_ami_id
+    elif name == "nimbus":
+        ami_id = config.nimbus_ami_id
+    elif name == "supervisor":
+        ami_id = config.supervisor_ami_id
+    elif name == "ui":
+        ami_id = config.ui_ami_id
+    elif name == "zookeeper":
+        ami_id = config.zookeeper_ami_id
+    return ami_id
+
 ''' Starts a single ec2 instance. '''
 def start_ec2_instance(session, userdata, securitygroups, name, count=1):
+    ami_id = get_ami_id(name)            
     ec2 = session.resource('ec2')
     instances = ec2.Subnet("subnet-b81522d1").create_instances(
-        ImageId="ami-f3659d9c",
+        ImageId=ami_id,
         MinCount=count,
         MaxCount=count,
         KeyName=config.key_pair,
@@ -155,7 +177,6 @@ def start_supervisor_instance(session, zk_instances, nimbus_instances):
     userdata = userdata.replace("_NIMBUS_SEEDS_", nimbus_ips)
     userdata = userdata.replace("_SUPERVISOR_PORTS_", supervisor_ports)
     userdata = userdata.replace("_STORM_SERVICE_", "supervisor")
-    print(userdata)
     return start_ec2_instance(session, userdata, config.security_groups_sv,
         "supervisor", config.supervisors)
 

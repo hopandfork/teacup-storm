@@ -6,19 +6,20 @@ if [ ! -e /opt/apache-storm-$STORM_VER ]; then
     wget http://www-eu.apache.org/dist/storm/apache-storm-$STORM_VER/apache-storm-$STORM_VER.tar.gz
     tar -zxf apache-storm-$STORM_VER.tar.gz
     rm apache-storm-$STORM_VER.tar.gz
-    # Configures Storm.
     mkdir /mnt/storm
-    cd ./apache-storm-$STORM_VER/conf
-    echo "storm.zookeeper.servers:" > ./storm.yaml
-    _ZOOKEEPER_SERVERS_
-    echo 'storm.local.dir: "/mnt/storm"' >> ./storm.yaml
-    echo 'nimbus.seeds: [_NIMBUS_SEEDS_]' >> ./storm.yaml
-    _SUPERVISOR_PORTS_
 fi
+# Configures Storm.
+cd /opt/apache-storm-$STORM_VER/conf
+echo "storm.zookeeper.servers:" > ./storm.yaml
+_ZOOKEEPER_SERVERS_
+echo 'storm.local.dir: "/mnt/storm"' >> ./storm.yaml
+echo 'nimbus.seeds: [_NIMBUS_SEEDS_]' >> ./storm.yaml
+_SUPERVISOR_PORTS_
 
 if [ ! -e /usr/local/bin/supervisord ]; then
-    # This script installs the supervisor supervisord, found at www.supervisord.org
+    # This script installs the supervisor supervisord.
     easy_install supervisor
+    # supervisord configuration
     echo "[unix_http_server]" > /etc/supervisord.conf
     echo "file=/tmp/supervisor.sock" >> /etc/supervisord.conf
     echo "[supervisord]" >> /etc/supervisord.conf
