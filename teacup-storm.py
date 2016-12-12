@@ -18,18 +18,10 @@ def create_session():
     )
     return session
 
-def is_default_ami():
-    global config
-    if config.nimbus_ami_id == "" or config.supervisor_ami_id == "" or config.ui_ami_id == "" or config.zookeeper_ami_id == "":
-        return True
-    return False
-
 def get_ami_id(name):
     global config
     ami_id = None
-    if is_default_ami():
-        ami_id = config.default_ami_id
-    elif name == "nimbus":
+    if name == "nimbus":
         ami_id = config.nimbus_ami_id
     elif name == "supervisor":
         ami_id = config.supervisor_ami_id

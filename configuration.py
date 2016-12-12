@@ -15,10 +15,10 @@ class Configuration:
         self.get_required_parameter(conf, 'default_vpc')
         self.get_required_parameter(conf, 'default_vpc_security_group')
         self.get_required_parameter(conf, 'default_ami_id')
-        self.get_parameter(conf, 'nimbus_ami_id', '')
-        self.get_parameter(conf, 'supervisor_ami_id', '')
-        self.get_parameter(conf, 'ui_ami_id', '')
-        self.get_parameter(conf, 'zookeeper_ami_id', '')
+        self.get_parameter(conf, 'nimbus_ami_id', self.default_ami_id)
+        self.get_parameter(conf, 'supervisor_ami_id', self.default_ami_id)
+        self.get_parameter(conf, 'ui_ami_id', self.default_ami_id)
+        self.get_parameter(conf, 'zookeeper_ami_id', self.default_ami_id)
         self.get_parameter(conf, 'zk_instances', 1)
         self.get_parameter(conf, 'supervisors', 1)
         self.get_parameter(conf, 'slots', 4)
@@ -46,6 +46,7 @@ class Configuration:
         else:
             print("Missing required parameter '{}' in configuration."
                     .format(key))
+            exit(3)
 
     def get_parameter(self, conf, key, default_value):
         if key in conf:
