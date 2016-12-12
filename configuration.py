@@ -1,8 +1,5 @@
 import yaml
 
-''' Global configuration object. '''
-global config
-
 class Configuration:
     def __init__(self):
         conf = self.parse_configuration_file('config.yaml')
@@ -15,6 +12,8 @@ class Configuration:
         self.get_required_parameter(conf, 'security_groups_ui')
         self.get_required_parameter(conf, 'security_groups_ni')
         self.get_required_parameter(conf, 'security_groups_sv')
+        self.get_required_parameter(conf, 'default_vpc')
+        self.get_required_parameter(conf, 'default_vpc_security_group')
         self.get_parameter(conf, 'zk_instances', 1)
         self.get_parameter(conf, 'supervisors', 1)
         self.get_parameter(conf, 'slots', 4)
