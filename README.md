@@ -27,6 +27,26 @@ Then, run:
 
 and paste generated lines into `config.yaml`.
 
+Here is a list of supported configuration options:
+
+- `region_name`: AWS region to use
+- `aws_access_key_id`: ID of your AWS Access Key
+- `aws_secret_access_key`: your AWS secret Access Key
+- `key_pair`: EC2 keypair to use
+- `default_vpc`: ID of your default VPC
+- `default_vpc_security_group`: ID of default security group in the VPC
+- `security_groups_zk`: list of Security Group to use on ZooKeeper node(s)
+- `security_groups_ni`: list of Security Group to use on Nimbus node(s)
+- `security_groups_sv`: list of Security Group to use on Supervisor node(s)
+- `security_groups_ui`: list of Security Group to use on UI node(s)
+- `supervisors`: (optional) number of Supervisor nodes to run (default=1)
+- `slots`: (optional) number of workers to run on each Supervisor node (default=4)
+- `default_ami_id`: ID of default AMI use for launched instances
+- `nimbus_ami_id`: (optional) ID of specific AMI to use for Nimbus instance(s)
+- `supervisor_ami_id`: (optional) ID of specific AMI to use for Supervisor instance(s)
+- `ui_ami_id`: (optional) ID of specific AMI to use for UI instance(s)
+- `zookeeper_ami_id`: (optional) ID of specific AMI to use for ZooKeeper instance(s)
+
 ## Usage
 
 	python teacup-storm.py start
