@@ -1,5 +1,10 @@
 #!/bin/bash
 STORM_VER=1.0.2
+# Cleanup
+rm -rf /mnt/storm/*
+rm -f /tmp/supervisor.sock
+rm -f /tmp/supervisord.log
+rm -f /tmp/supervisord.pid
 if [ ! -e /opt/apache-storm-$STORM_VER ]; then
     # Downloads and unpacks Apache Storm on the machine.
     cd /opt/

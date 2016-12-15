@@ -1,5 +1,10 @@
 #!/bin/bash
 ZK_VER=3.4.6
+# Cleanup
+rm -rf /var/zookeeper/*
+rm -f /tmp/supervisord.log
+rm -f /tmp/supervisor.sock
+rm -f /tmp/supervisord.pid
 if [ ! -e /opt/zookeeper-$ZK_VER ]; then
     # Downloads and unpacks ZooKeeper on the machine.
     cd /opt/
