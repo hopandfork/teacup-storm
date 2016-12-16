@@ -44,6 +44,10 @@ if [ ! -e /usr/local/bin/supervisord ]; then
     echo "command=/opt/apache-storm-$STORM_VER/bin/storm _STORM_SERVICE_" >> /etc/supervisord.conf
     echo "autorestart=true" >> /etc/supervisord.conf
     echo "stopsignal=KILL" >> /etc/supervisord.conf
+    echo "[program:logviewer]" >> /etc/supervisord.conf
+    echo "command=/opt/apache-storm-$STORM_VER/bin/storm logviewer" >> /etc/supervisord.conf
+    echo "autorestart=true" >> /etc/supervisord.conf
+    echo "stopsignal=KILL" >> /etc/supervisord.conf
 fi
 
 # Starts Storm in supervisor mode.

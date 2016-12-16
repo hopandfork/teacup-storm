@@ -1,4 +1,5 @@
 ''' This file is currently inteded to test aws and boto3 capabilities. '''
+import os
 import sys
 import boto3
 import yaml
@@ -55,6 +56,9 @@ def start_ec2_instance(session, userdata, securitygroups, name, count=1):
             ]
         )
         instance.load()
+        with open("/etc/hosts", "a") as myfile:
+            myfile.write("# teacup storm host\n" + instance.public_ip_address 
+                + " " + instance.private_dns_name + "\n")
         print(name + " instance with id " + instance.instance_id + ", " 
               + "private ip " + instance.private_ip_address + " and public ip "
               + instance.public_ip_address + " is " + instance.state["Name"])
@@ -206,6 +210,9 @@ def main():
     global config
     config = Configuration()
     session = create_session()
+    if os.getuid() != 0:
+        print("You should run as root.")
+        return -1
     if len(sys.argv) > 1 and (sys.argv[1] == "start" or sys.argv[1] == "stop"):
         if sys.argv[1] == "start":
             print("Starting storm cluster...")
