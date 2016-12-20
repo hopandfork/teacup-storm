@@ -41,9 +41,17 @@ def start_ec2_instance(session, userdata, securitygroups, name, count=1):
         MinCount=count,
         MaxCount=count,
         KeyName=config.key_pair,
-        InstanceType="t2.micro",
+        InstanceType="t2.small",
         UserData=userdata,
-        SecurityGroupIds=securitygroups
+        SecurityGroupIds=securitygroups,
+        BlockDeviceMappings=[
+            {
+                'DeviceName': '/dev/xvda',
+                'Ebs': {
+                    'VolumeSize': 32,
+                }
+            }
+        ]
     )
     for instance in instances:
         instance.wait_until_running()
