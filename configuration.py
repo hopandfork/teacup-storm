@@ -15,6 +15,7 @@ class Configuration:
         self.get_required_parameter(conf, 'default_vpc')
         self.get_required_parameter(conf, 'default_vpc_security_group')
         self.get_required_parameter(conf, 'default_ami_id')
+        self.get_required_parameter(conf, 'subnet_id')
         self.get_parameter(conf, 'nimbus_ami_id', self.default_ami_id)
         self.get_parameter(conf, 'supervisor_ami_id', self.default_ami_id)
         self.get_parameter(conf, 'ui_ami_id', self.default_ami_id)
@@ -22,6 +23,8 @@ class Configuration:
         self.get_parameter(conf, 'zk_instances', 1)
         self.get_parameter(conf, 'supervisors', 1)
         self.get_parameter(conf, 'slots', 4)
+        self.get_parameter(conf, 'instance_type', 't2.micro')
+        self.get_parameter(conf, 'volume_size', 8)
         
     def parse_configuration_file(self, config_file):
         try:

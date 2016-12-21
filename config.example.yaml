@@ -16,4 +16,7 @@ nimbus_ami_id: "ami-abcd0123"
 supervisor_ami_id: "ami-bcde1234"
 ui_ami_id: "ami-abce2345"
 zookeeper_ami_id: "ami-edcb3456"
+instance_type: "t2.small"
+subnet_id: "subnet-b81522d1"
+volume_size: 8
 ...

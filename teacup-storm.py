@@ -36,19 +36,19 @@ def get_ami_id(name):
 def start_ec2_instance(session, userdata, securitygroups, name, count=1):
     ami_id = get_ami_id(name)            
     ec2 = session.resource('ec2')
-    instances = ec2.Subnet("subnet-b81522d1").create_instances(
+    instances = ec2.Subnet(config.subnet_id).create_instances(
         ImageId=ami_id,
         MinCount=count,
         MaxCount=count,
         KeyName=config.key_pair,
-        InstanceType="t2.small",
+        InstanceType=config.instance_type,
         UserData=userdata,
         SecurityGroupIds=securitygroups,
         BlockDeviceMappings=[
             {
                 'DeviceName': '/dev/xvda',
                 'Ebs': {
-                    'VolumeSize': 32,
+                    'VolumeSize': config.volume_size,
                 }
             }
         ]
