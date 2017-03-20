@@ -23,7 +23,11 @@ class Configuration:
         self.get_parameter(conf, 'zk_instances', 1)
         self.get_parameter(conf, 'supervisors', 1)
         self.get_parameter(conf, 'slots', 4)
-        self.get_parameter(conf, 'instance_type', 't2.micro')
+        self.get_parameter(conf, 'default_instance_type', 't2.micro')
+        self.get_parameter(conf, 'nimbus_instance_type', self.default_instance_type)
+        self.get_parameter(conf, 'ui_instance_type', self.default_instance_type)
+        self.get_parameter(conf, 'supervisor_instance_type', self.default_instance_type)
+        self.get_parameter(conf, 'zookeeper_instance_type', self.default_instance_type)
         self.get_parameter(conf, 'volume_size', 8)
         
     def parse_configuration_file(self, config_file):
