@@ -49,7 +49,6 @@ Here is a list of supported configuration options:
 
 ## Usage
 
-	python teacup-storm.py start
-	python teacup-storm.py stop
+	python teacup-storm.py
 
 
