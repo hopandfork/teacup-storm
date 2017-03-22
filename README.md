@@ -46,6 +46,11 @@ Here is a list of supported configuration options:
 - `supervisor_ami_id`: (optional) ID of specific AMI to use for Supervisor instance(s)
 - `ui_ami_id`: (optional) ID of specific AMI to use for UI instance(s)
 - `zookeeper_ami_id`: (optional) ID of specific AMI to use for ZooKeeper instance(s)
+- `default_instance_type`: (optional) instance type to use for launched instances
+- `nimbus_instance_type`: (optional) instance type to use for Nimbus instance(s)
+- `supervisor_instance_type`: (optional) instance type to use for Supervisor instance(s)
+- `ui_instance_type`: (optional) instance type to use for UI instance(s)
+- `zookeeper_instance_type`: (optional) instance type to use for ZooKeeper instance(s)
 
 ## Usage
 
