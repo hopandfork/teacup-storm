@@ -33,7 +33,7 @@ def get_ami_id(name):
     return ami_id
 
 ''' Starts a single ec2 instance. '''
-def start_ec2_instance(session, userdata, securitygroups, name, count=1):
+def start_ec2_instance(session, userdata, securitygroups, name, type, count=1):
     ami_id = get_ami_id(name)            
     ec2 = session.resource('ec2')
     instances = ec2.Subnet(config.subnet_id).create_instances(
@@ -41,7 +41,7 @@ def start_ec2_instance(session, userdata, securitygroups, name, count=1):
         MinCount=count,
         MaxCount=count,
         KeyName=config.key_pair,
-        InstanceType=config.instance_type,
+        InstanceType=type,
         UserData=userdata,
         SecurityGroupIds=securitygroups,
         BlockDeviceMappings=[
@@ -89,7 +89,7 @@ def start_zk_instance(session):
     global config
     userdata = get_zk_userdata()
     return start_ec2_instance(session, userdata, config.security_groups_zk,
-        "zookeeper")
+        "zookeeper", config.zookeeper_instance_type)
 
 def start_nimbus_instance(session, zk_instances):
     global config
@@ -103,7 +103,7 @@ def start_nimbus_instance(session, zk_instances):
     userdata = userdata.replace("_STORM_SERVICE_", "nimbus")
     userdata = userdata.replace("_SUPERVISOR_PORTS_", "")
     return start_ec2_instance(session, userdata, config.security_groups_ni,
-        "nimbus")
+        "nimbus", config.nimbus_instance_type)
 
 def compute_supervisor_ports(slots=4):
     supervisor_ports = "echo 'supervisor.slots.ports:' >> ./storm.yaml\n"
@@ -134,7 +134,7 @@ def start_supervisor_instance(session, zk_instances, nimbus_instances):
     userdata = userdata.replace("_SUPERVISOR_PORTS_", supervisor_ports)
     userdata = userdata.replace("_STORM_SERVICE_", "supervisor")
     return start_ec2_instance(session, userdata, config.security_groups_sv,
-        "supervisor", config.supervisors)
+        "supervisor", config.supervisor_instance_type, config.supervisors)
 
 def start_ui_instance(session, zk_instances, nimbus_instances):
     global config
@@ -155,7 +155,7 @@ def start_ui_instance(session, zk_instances, nimbus_instances):
     userdata = userdata.replace("_STORM_SERVICE_", "ui")
     userdata = userdata.replace("_SUPERVISOR_PORTS_", "")
     return start_ec2_instance(session, userdata, config.security_groups_ui,
-        "ui")
+        "ui", config.ui_instance_type)
 
 def start_storm_cluster(session):
     zk_instances = start_zk_instance(session)
