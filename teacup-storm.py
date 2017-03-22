@@ -72,54 +72,6 @@ def start_ec2_instance(session, userdata, securitygroups, name, count=1):
               + instance.public_ip_address + " is " + instance.state["Name"])
     return instances
 
-''' Prints instances state change. '''
-def print_state_change(response):
-    for instance in response:
-        iId = instance["InstanceId"]
-        curr = instance["CurrentState"]["Name"]
-        prev = instance["PreviousState"]["Name"]
-        print("Instance with id " + iId + " changed from " + prev + " to " 
-              + curr)
-
-''' Returns running instances ids. '''
-def get_instances_by_state_name(session, state_name):
-    idList = []
-    ec2 = session.resource('ec2')
-    instances = ec2.instances.filter(
-        Filters=[
-            {
-                'Name': 'instance-state-name',
-                'Values': [
-                    state_name
-                ]
-            }
-        ]
-    )
-    for instance in instances:
-        idList.append(instance.instance_id)
-
-    return idList
-
-''' Terminates all ec2 instances. '''
-def terminate_all_ec2_instances(session):
-    ec2 = session.resource('ec2')
-    
-    running_ids = get_instances_by_state_name(session, 'running')
-    if len(running_ids):
-        running = ec2.instances.filter(InstanceIds=running_ids)
-        stop_response = running.stop()
-        print_state_change(stopResponse[0]["StoppingInstances"])
-    else:
-        print("No running instance to stop.")
-
-    stopped_ids = get_instances_by_state_name(session, 'stopped')
-    if len(stopped_ids):
-        stopped = ec2.instances.filter(InstanceIds=stopped_ids)
-        terminate_response = stopped.terminate()  
-        print_state_change(terminateResponse[0]["TerminatingInstances"])
-    else:
-        print("No stopped instances to terminate.")
-
 ''' Gets default user data to run on startup. '''
 def get_zk_userdata():
     stream = open("./scripts/zookeeper.sh")
@@ -221,15 +173,11 @@ def main():
     if os.getuid() != 0:
         print("You should run as root.")
         return -1
-    if len(sys.argv) > 1 and (sys.argv[1] == "start" or sys.argv[1] == "stop"):
-        if sys.argv[1] == "start":
+    if len(sys.argv) == 1:
             print("Starting storm cluster...")
-            start_storm_cluster(session)
-        elif sys.argv[1] == "stop":
-            print("Stopping ec2 instances...")
-            terminate_all_ec2_instances(session)
+            start_storm_cluster(session) 
     else:
-        print("Usage: teacup-storm.py <start|stop>")
+        print("Usage: teacup-storm.py (no arguments)")
     
 if __name__ == "__main__":
     main()
